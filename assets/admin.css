@@ -1,0 +1,453 @@
+.warmpilot-wrap { max-width: 1600px; }
+.warmpilot-grid { display: grid; grid-template-columns: minmax(380px, 620px) minmax(600px, 1fr); gap: 20px; align-items: start; }
+.warmpilot-card { background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 20px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.warmpilot-card label { display: block; font-weight: 600; margin: 0 0 16px; }
+.warmpilot-card input[type="number"], .warmpilot-card textarea { width: 100%; margin-top: 6px; }
+.warmpilot-row { display: grid; gap: 14px; }
+.warmpilot-2 { grid-template-columns: repeat(2, 1fr); }
+.warmpilot-3 { grid-template-columns: repeat(3, 1fr); }
+.warmpilot-card fieldset { border: 1px solid #dcdcde; padding: 12px 14px; margin: 0 0 16px; border-radius: 6px; }
+.warmpilot-card legend { font-weight: 700; padding: 0 6px; }
+.warmpilot-check { display: inline-block !important; margin: 5px 20px 5px 0 !important; font-weight: 400 !important; }
+.warmpilot-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.hint { display: block; font-weight: 400; color: #646970; margin-top: 5px; word-break: break-all; }
+.warmpilot-report-head { display: flex; align-items: center; justify-content: space-between; }
+.warmpilot-badge { background: #f0f0f1; border-radius: 999px; padding: 5px 10px; font-weight: 600; text-transform: capitalize; }
+.warmpilot-badge[data-state="running"] { background: #e7f5ff; color: #0073aa; }
+.warmpilot-badge[data-state="finished"] { background: #edfaef; color: #008a20; }
+.warmpilot-badge[data-state="stopped"] { background: #fff4e5; color: #996800; }
+.warmpilot-progress { height: 10px; background: #f0f0f1; border-radius: 999px; overflow: hidden; margin: 15px 0; }
+.warmpilot-progress span { display: block; height: 100%; width: 0; background: currentColor; transition: width .2s ease; }
+.warmpilot-stats { display: grid; grid-template-columns: repeat(7, minmax(100px, 1fr)); gap: 10px; margin: 15px 0; }
+.warmpilot-stats div { border: 1px solid #e2e4e7; border-radius: 6px; padding: 12px; }
+.warmpilot-stats strong { display: block; font-size: 20px; line-height: 1.2; }
+.warmpilot-stats span { display: block; color: #646970; font-size: 12px; margin-top: 4px; }
+.warmpilot-table-wrap { max-height: 680px; overflow: auto; border: 1px solid #dcdcde; }
+#warmpilot-results { border: 0; }
+#warmpilot-results thead th { position: sticky; top: 0; z-index: 2; background: #fff; }
+.warmpilot-url { min-width: 330px; word-break: break-all; }
+.warmpilot-failed td, .warmpilot-skipped td { opacity: .82; }
+@media (max-width: 1200px) {
+  .warmpilot-grid { grid-template-columns: 1fr; }
+  .warmpilot-stats { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 700px) {
+  .warmpilot-2, .warmpilot-3, .warmpilot-stats { grid-template-columns: 1fr; }
+}
+.warmpilot-progress-meta { margin: -6px 0 14px; color: #646970; font-size: 12px; }
+.warmpilot-report-pagination { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.warmpilot-report-pagination label { margin: 0 0 0 auto; display: flex; align-items: center; gap: 6px; font-weight: 400; }
+.warmpilot-report-pagination select { min-width: 76px; }
+.warmpilot-cron-card { margin-top: 20px; }
+.warmpilot-cron-card select, .warmpilot-cron-card input[type="text"] { width: 100%; margin-top: 6px; }
+.warmpilot-cron-enabled { align-self: end; padding-bottom: 8px; }
+.warmpilot-cron-table-wrap { margin-top: 16px; max-height: 420px; }
+.warmpilot-tabs { margin: 18px 0 20px; }
+.warmpilot-tab-panel { display: none; }
+.warmpilot-tab-panel.is-active { display: block; }
+.warmpilot-cron-layout { display: grid; grid-template-columns: minmax(500px, 760px) minmax(480px, 1fr); gap: 20px; align-items: start; }
+.warmpilot-cron-editor input[type="text"], .warmpilot-cron-editor input[type="number"], .warmpilot-cron-editor select, .warmpilot-cron-editor textarea { width: 100%; margin-top: 6px; }
+.warmpilot-cron-editor label { display: block; font-weight: 600; margin-bottom: 16px; }
+.warmpilot-cron-list .warmpilot-table-wrap { max-height: 760px; }
+@media (max-width: 1250px) { .warmpilot-cron-layout { grid-template-columns: 1fr; } }
+.warmpilot-row-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 290px; }
+.warmpilot-row-actions .button { margin: 0; white-space: nowrap; }
+.warmpilot-row-actions .button-link-delete { min-height: 30px; padding: 0 10px; border: 1px solid #d63638; border-radius: 3px; background: #fff; color: #b32d2e; text-decoration: none; cursor: pointer; }
+.warmpilot-row-actions .button-link-delete:hover { background: #d63638; color: #fff; }
+.warmpilot-logs-title { margin-top: 26px; }
+.warmpilot-logs-table-wrap { max-height: 520px !important; }
+.warmpilot-logs-table td, .warmpilot-logs-table th { vertical-align: middle; }
+
+.warmpilot-task-status { display:inline-flex; align-items:center; white-space:nowrap; border-radius:999px; padding:4px 9px; font-weight:600; background:#f0f0f1; }
+.warmpilot-task-status-running { background:#e7f5ff; color:#0073aa; }
+.warmpilot-task-status-stopping { background:#fff4e5; color:#996800; }
+.warmpilot-task-status-disabled { color:#646970; }
+.warmpilot-task-status-idle { background:#edfaef; color:#008a20; }
+.warmpilot-log-viewer { max-width: none; }
+.warmpilot-log-viewer .warmpilot-report-head { gap: 20px; align-items: flex-start; }
+.warmpilot-log-table-wrap { max-height: 720px; }
+#warmpilot-log-results thead th { position: sticky; top: 0; z-index: 2; background: #fff; }
+.warmpilot-log-nav[hidden] { display: none !important; }
+
+.warmpilot-job-type { display:inline-block; padding:3px 8px; border-radius:999px; font-weight:600; font-size:12px; }
+.warmpilot-job-type-manual { background:#f0f0f1; color:#2c3338; }
+.warmpilot-job-type-cron { background:#e7f5ff; color:#0073aa; }
+.warmpilot-jobs-log-list { margin-bottom:20px; }
+
+/* v1.0.14 UI refinements */
+.warmpilot-row.warmpilot-3 > label { min-width: 0; }
+.warmpilot-row.warmpilot-3 > label input { box-sizing: border-box; }
+.warmpilot-jobs-log-head { align-items: flex-end; gap: 24px; }
+.warmpilot-log-settings { margin-left: auto; display: flex; align-items: flex-end; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.warmpilot-log-settings label { margin: 0; min-width: 150px; font-weight: 600; }
+.warmpilot-log-settings input { width: 150px !important; margin-top: 6px; }
+.warmpilot-actions-col { text-align: right !important; }
+.warmpilot-job-log-actions { justify-content: flex-end; min-width: 220px; }
+.warmpilot-log-viewer .warmpilot-report-head { align-items: center; }
+.warmpilot-log-viewer-actions { margin-left: auto; justify-content: flex-end; min-width: auto; }
+.warmpilot-log-close { width: 34px; height: 34px; padding: 0; border: 0; background: transparent; color: #50575e; font-size: 30px; line-height: 30px; cursor: pointer; border-radius: 4px; }
+.warmpilot-log-close:hover, .warmpilot-log-close:focus { color: #d63638; background: #f6f7f7; outline: none; }
+@media (max-width: 900px) {
+  .warmpilot-jobs-log-head { align-items: flex-start; flex-direction: column; }
+  .warmpilot-log-settings { margin-left: 0; justify-content: flex-start; }
+}
+
+/* v1.0.15 layout and controls */
+.warmpilot-row.warmpilot-3 { align-items: end; }
+.warmpilot-row.warmpilot-3 > label { display: grid; grid-template-rows: minmax(42px, auto) auto; align-content: end; }
+.warmpilot-row.warmpilot-3 > label > input,
+.warmpilot-row.warmpilot-3 > label > select { align-self: end; }
+.warmpilot-cron-row-actions { justify-content: flex-end; flex-wrap: nowrap; min-width: 430px; }
+.warmpilot-cron-table .warmpilot-actions-col { width: 1%; white-space: nowrap; }
+.warmpilot-log-close {
+  display: inline-grid !important;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+  box-sizing: border-box;
+}
+.warmpilot-log-viewer .warmpilot-report-head > div:first-child { min-width: 0; }
+.warmpilot-log-viewer-actions { align-self: flex-start; }
+.warmpilot-log-settings-card { max-width: 760px; }
+.warmpilot-log-settings-form { margin-top: 20px; }
+.warmpilot-log-settings-form input[type="number"] { width: 100%; margin-top: 6px; }
+@media (max-width: 1500px) {
+  .warmpilot-cron-row-actions { flex-wrap: wrap; min-width: 300px; }
+}
+
+
+/* v1.0.16 alignment, navigation, and compact cron actions */
+.warmpilot-row.warmpilot-3 > label {
+  display: grid;
+  grid-template-rows: 44px 36px;
+  align-content: start;
+}
+.warmpilot-row.warmpilot-3 > label > input,
+.warmpilot-row.warmpilot-3 > label > select {
+  width: 100%;
+  height: 36px;
+  min-height: 36px;
+  margin-top: 0;
+  align-self: stretch;
+}
+.warmpilot-log-viewer .warmpilot-report-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 20px;
+}
+.warmpilot-log-viewer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+.warmpilot-log-close {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 1px solid transparent !important;
+  background: #f6f7f7 !important;
+  color: #d63638 !important;
+  border-radius: 4px !important;
+  box-sizing: border-box !important;
+  cursor: pointer;
+}
+.warmpilot-log-close .dashicons {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  line-height: 20px;
+  margin: 0;
+}
+.warmpilot-log-close:hover,
+.warmpilot-log-close:focus {
+  border-color: #d63638 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.warmpilot-cron-table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+}
+.warmpilot-cron-table {
+  table-layout: auto;
+}
+.warmpilot-cron-table .warmpilot-actions-col {
+  width: 250px;
+  min-width: 250px;
+  text-align: right;
+  white-space: normal;
+}
+.warmpilot-cron-actions {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: end;
+  align-items: center;
+  gap: 7px 8px;
+  min-width: 220px;
+}
+.warmpilot-cron-actions > .button {
+  margin: 0;
+  white-space: nowrap;
+}
+.warmpilot-cron-secondary-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 7px;
+  min-height: 24px;
+  white-space: nowrap;
+}
+.warmpilot-cron-secondary-actions .button-link,
+.warmpilot-cron-secondary-actions .button-link-delete {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  min-height: auto;
+  line-height: 1.5;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 13px;
+}
+.warmpilot-cron-secondary-actions .button-link:hover,
+.warmpilot-cron-secondary-actions .button-link:focus {
+  color: #135e96;
+  text-decoration: underline;
+}
+.warmpilot-cron-secondary-actions .button-link-delete {
+  color: #b32d2e;
+}
+.warmpilot-cron-secondary-actions .button-link-delete:hover,
+.warmpilot-cron-secondary-actions .button-link-delete:focus {
+  color: #8a2424;
+  text-decoration: underline;
+}
+.warmpilot-cron-secondary-actions button:disabled {
+  color: #a7aaad;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+.warmpilot-action-separator {
+  color: #a7aaad;
+  user-select: none;
+}
+@media (max-width: 782px) {
+  .warmpilot-cron-table-wrap { overflow-x: auto; }
+  .warmpilot-cron-table .warmpilot-actions-col { min-width: 200px; }
+}
+
+/* Cron editor mode */
+.warmpilot-cron-editor-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.warmpilot-cron-editor-head h2 { margin: 0 0 6px; }
+.warmpilot-cron-editor-mode {
+  margin: 0;
+  color: #646970;
+}
+.warmpilot-cron-editor-mode-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #f0f0f1;
+  color: #50575e;
+  font-weight: 600;
+}
+.warmpilot-cron-editor.is-editing .warmpilot-cron-editor-mode-label {
+  background: #e7f5ff;
+  color: #0073aa;
+}
+.warmpilot-new-cron-task { flex: 0 0 auto; }
+.warmpilot-new-cron-task[hidden] { display: none !important; }
+@media (max-width: 600px) {
+  .warmpilot-cron-editor-head { align-items: stretch; flex-direction: column; }
+  .warmpilot-new-cron-task { align-self: flex-start; }
+}
+
+
+/* v1.0.19 cron environment */
+.warmpilot-cron-environment { margin-bottom: 20px; }
+.warmpilot-cron-environment-head { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
+.warmpilot-cron-environment-head h2 { margin-top:0; }
+.warmpilot-cron-mode-summary { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.warmpilot-cron-mode-badge, .warmpilot-cron-health { display:inline-flex; align-items:center; border-radius:999px; padding:6px 11px; font-weight:600; white-space:nowrap; }
+.warmpilot-cron-mode-badge { background:#e7f5ff; color:#0073aa; }
+.warmpilot-cron-health-ok { background:#edfaef; color:#008a20; }
+.warmpilot-cron-health-warning { background:#fff4e5; color:#996800; }
+.warmpilot-cron-mode-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:18px 0; }
+.warmpilot-cron-mode-option { border:1px solid #dcdcde; border-radius:7px; padding:16px; background:#fff; }
+.warmpilot-cron-mode-option.is-current { border-color:#2271b1; box-shadow:0 0 0 1px #2271b1; background:#f6fbff; }
+.warmpilot-cron-mode-option h3 { margin:0 0 8px; }
+.warmpilot-cron-mode-option p { margin:0 0 12px; color:#50575e; }
+.warmpilot-cron-mode-option code { display:inline-block; }
+.warmpilot-cron-diagnostics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:14px 0; }
+.warmpilot-cron-diagnostics > div { border:1px solid #e2e4e7; border-radius:6px; padding:11px; }
+.warmpilot-cron-diagnostics strong { display:block; margin-bottom:4px; }
+.warmpilot-cron-setup { margin-top:14px; }
+.warmpilot-cron-setup summary { cursor:pointer; font-weight:600; }
+.warmpilot-cron-setup pre { max-width:100%; overflow:auto; padding:12px; background:#f6f7f7; border:1px solid #dcdcde; border-radius:4px; }
+@media (max-width: 1000px) {
+  .warmpilot-cron-mode-grid, .warmpilot-cron-diagnostics { grid-template-columns:1fr 1fr; }
+}
+@media (max-width: 700px) {
+  .warmpilot-cron-environment-head { flex-direction:column; }
+  .warmpilot-cron-mode-summary { justify-content:flex-start; }
+  .warmpilot-cron-mode-grid, .warmpilot-cron-diagnostics { grid-template-columns:1fr; }
+}
+.warmpilot-cron-expression-grid { display:grid; grid-template-columns:repeat(5,minmax(90px,1fr)); gap:12px; margin:0 0 8px; }
+.warmpilot-cron-expression-grid label { margin-bottom:0; }
+.warmpilot-custom-cron { border:1px solid #dcdcde; border-radius:6px; padding:14px; margin:0 0 16px; background:#f9f9f9; }
+@media (max-width: 900px) { .warmpilot-cron-expression-grid { grid-template-columns:repeat(2,minmax(120px,1fr)); } }
+
+/* v1.0.20.10: keep the original cron table layout while fitting its container */
+.warmpilot-cron-list {
+  container-type: inline-size;
+}
+.warmpilot-cron-table-wrap {
+  overflow-x: hidden;
+}
+.warmpilot-cron-table {
+  width: 100%;
+  table-layout: fixed;
+}
+.warmpilot-cron-table th,
+.warmpilot-cron-table td {
+  box-sizing: border-box;
+  padding: 10px 8px;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.warmpilot-cron-table th:nth-child(1),
+.warmpilot-cron-table td:nth-child(1) { width: 10%; }
+.warmpilot-cron-table th:nth-child(2),
+.warmpilot-cron-table td:nth-child(2) { width: 15%; }
+.warmpilot-cron-table th:nth-child(3),
+.warmpilot-cron-table td:nth-child(3) { width: 12%; }
+.warmpilot-cron-table th:nth-child(4),
+.warmpilot-cron-table td:nth-child(4) { width: 13%; }
+.warmpilot-cron-table th:nth-child(5),
+.warmpilot-cron-table td:nth-child(5) { width: 13%; }
+.warmpilot-cron-table th:nth-child(6),
+.warmpilot-cron-table td:nth-child(6) { width: 7%; }
+.warmpilot-cron-table th:nth-child(7),
+.warmpilot-cron-table td:nth-child(7) { width: 30%; }
+.warmpilot-cron-table .warmpilot-actions-col {
+  width: auto;
+  min-width: 0;
+  text-align: right;
+}
+.warmpilot-cron-actions {
+  min-width: 0;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+}
+.warmpilot-cron-actions > .button {
+  width: 100%;
+  min-width: 0;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.warmpilot-cron-secondary-actions {
+  min-width: 0;
+  white-space: normal;
+  flex-wrap: wrap;
+  gap: 3px 6px;
+}
+
+@container (max-width: 720px) {
+  .warmpilot-cron-table th,
+  .warmpilot-cron-table td {
+    padding: 8px 5px;
+    font-size: 12px;
+  }
+  .warmpilot-cron-table th:nth-child(1),
+  .warmpilot-cron-table td:nth-child(1) { width: 9%; }
+  .warmpilot-cron-table th:nth-child(2),
+  .warmpilot-cron-table td:nth-child(2) { width: 15%; }
+  .warmpilot-cron-table th:nth-child(3),
+  .warmpilot-cron-table td:nth-child(3) { width: 11%; }
+  .warmpilot-cron-table th:nth-child(4),
+  .warmpilot-cron-table td:nth-child(4),
+  .warmpilot-cron-table th:nth-child(5),
+  .warmpilot-cron-table td:nth-child(5) { width: 13%; }
+  .warmpilot-cron-table th:nth-child(6),
+  .warmpilot-cron-table td:nth-child(6) { width: 6%; }
+  .warmpilot-cron-table th:nth-child(7),
+  .warmpilot-cron-table td:nth-child(7) { width: 33%; }
+  .warmpilot-task-status {
+    padding: 4px 7px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+  .warmpilot-cron-actions > .button {
+    min-height: 30px;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  .warmpilot-cron-secondary-actions .button-link,
+  .warmpilot-cron-secondary-actions .button-link-delete {
+    font-size: 11px;
+  }
+}
+
+@container (max-width: 540px) {
+  .warmpilot-cron-table th,
+  .warmpilot-cron-table td {
+    padding: 7px 4px;
+    font-size: 11px;
+  }
+  .warmpilot-cron-table th:nth-child(1),
+  .warmpilot-cron-table td:nth-child(1) { width: 9%; }
+  .warmpilot-cron-table th:nth-child(2),
+  .warmpilot-cron-table td:nth-child(2) { width: 15%; }
+  .warmpilot-cron-table th:nth-child(3),
+  .warmpilot-cron-table td:nth-child(3) { width: 11%; }
+  .warmpilot-cron-table th:nth-child(4),
+  .warmpilot-cron-table td:nth-child(4),
+  .warmpilot-cron-table th:nth-child(5),
+  .warmpilot-cron-table td:nth-child(5) { width: 12%; }
+  .warmpilot-cron-table th:nth-child(6),
+  .warmpilot-cron-table td:nth-child(6) { width: 6%; }
+  .warmpilot-cron-table th:nth-child(7),
+  .warmpilot-cron-table td:nth-child(7) { width: 35%; }
+  .warmpilot-cron-actions {
+    grid-template-columns: 1fr;
+  }
+  .warmpilot-cron-secondary-actions {
+    grid-column: 1;
+    justify-content: flex-end;
+  }
+  .warmpilot-action-separator {
+    display: none;
+  }
+}

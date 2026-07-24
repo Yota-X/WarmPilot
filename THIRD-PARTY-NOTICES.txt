@@ -1,0 +1,56 @@
+Third-Party Notices
+===================
+
+WarmPilot is licensed under GPL-2.0-or-later. The release package also contains
+the following third-party components and data under their respective licenses.
+
+PHP Domain Parser
+-----------------
+
+- Package: `jeremykendall/php-domain-parser`
+- Version: 6.4.0
+- License: MIT
+- Source: https://github.com/jeremykendall/php-domain-parser
+- License files: `vendor/jeremykendall/php-domain-parser/LICENSE` and
+  `vendor/jeremykendall/php-domain-parser/ASF-LICENSE-2.0`
+
+Symfony Intl IDN Polyfill
+-------------------------
+
+- Package: `symfony/polyfill-intl-idn`
+- Version: 1.38.1
+- License: MIT
+- Source: https://github.com/symfony/polyfill-intl-idn
+- License file: `vendor/symfony/polyfill-intl-idn/LICENSE`
+
+Symfony Intl Normalizer Polyfill
+--------------------------------
+
+- Package: `symfony/polyfill-intl-normalizer`
+- Version: 1.38.0
+- License: MIT
+- Source: https://github.com/symfony/polyfill-intl-normalizer
+- License file: `vendor/symfony/polyfill-intl-normalizer/LICENSE`
+
+Composer Autoloader
+-------------------
+
+- Component: Composer-generated runtime autoloader
+- License: MIT
+- Source: https://github.com/composer/composer
+- License file: `licenses/Composer-MIT.txt`
+
+End users do not need Composer. The generated autoloader and required runtime
+libraries are bundled in the installable release ZIP.
+
+Public Suffix List
+------------------
+
+- Data: Public Suffix List
+- License: Mozilla Public License 2.0
+- Source: https://publicsuffix.org/list/public_suffix_list.dat
+- Included source: `resources/public_suffix_list.dat`
+- License file: `licenses/MPL-2.0.txt`
+
+The Public Suffix List is bundled as its original human-readable source data.
+WarmPilot does not download it at runtime.

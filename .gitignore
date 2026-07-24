@@ -1,0 +1,42 @@
+# Composer dependencies
+/vendor/
+
+# Release artifacts
+/dist/
+/*.zip
+
+# Test and coverage output
+/.phpunit.result.cache
+/.phpunit.cache/
+/coverage/
+/.phpunit.cache
+*.coverage
+
+# JavaScript dependencies and tooling caches
+/node_modules/
+/.npm/
+/.yarn/
+/.pnpm-store/
+
+# Local environment and secrets
+/.env
+/.env.*
+!/.env.example
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# IDE settings
+/.idea/
+/.vscode/
+/*.code-workspace
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini

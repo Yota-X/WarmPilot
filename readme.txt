@@ -1,14 +1,14 @@
 === WarmPilot ===
-Contributors: yota-x
+Contributors: yota-x, alkesh7
 Tags: cache, cache warmer, cache preload, crawler, performance
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Warm WordPress pages concurrently, crawl internal links and sitemaps, and run independent scheduled warming tasks.
+Warm WordPress pages concurrently, crawl internal links and sitemaps, verify cache headers, and run independent scheduled warming tasks.
 
 == Description ==
 
@@ -122,6 +122,14 @@ By default, WarmPilot preserves its settings, cron profiles, jobs, and logs when
 
 == Changelog ==
 
+= 1.0.1 =
+
+* Verified compatibility with WordPress 7.0.
+* Fixed the admin asset cache-busting version being out of sync with the plugin's actual release version.
+* Made the admin UI fully translatable: table headers, stat labels, status badges, and action buttons across the Manual warming, Cron tasks, and Job Logs tabs, including strings previously hardcoded in the admin JavaScript.
+* Removed a vestigial dead-code branch in the cron expression matcher.
+* Added PHPCS/WPCS coverage and documentation comments throughout the codebase; no functional changes.
+
 = 1.0.0 =
 
 * Prepared the initial WordPress.org release package.
@@ -132,6 +140,10 @@ By default, WarmPilot preserves its settings, cron profiles, jobs, and logs when
 * Added job logs, error-only views, CSV export, log retention, and cron environment diagnostics.
 
 == Upgrade Notice ==
+
+= 1.0.1 =
+
+Maintenance release: WordPress 7.0 compatibility verified, an asset cache-busting bug fixed, and code-quality/PHPCS improvements. No settings changes required.
 
 = 1.0.0 =
 

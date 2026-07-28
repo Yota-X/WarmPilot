@@ -29,7 +29,11 @@ jQuery(function ($) {
     }
 
     function esc(value) { return $('<div>').text(value == null ? '' : String(value)).html(); }
-    function setState(status) { $state.text(status || 'Idle').attr('data-state', status || 'idle'); }
+    function formatPageOfRows(page, pages, total) {
+        return WarmPilotAdmin.strings.pageOfPages.replace('%1$s', page).replace('%2$s', pages) +
+            ' · ' + WarmPilotAdmin.strings.rowsCount.replace('%s', Number(total || 0));
+    }
+    function setState(status) { $state.text(status || WarmPilotAdmin.strings.idle).attr('data-state', status || 'idle'); }
 
     function updateManualControls(status) {
         const normalized = String(status || 'idle').toLowerCase();
@@ -39,7 +43,7 @@ jQuery(function ($) {
         $('.warmpilot-stop')
             .prop('hidden', !running)
             .prop('disabled', stopping)
-            .text(stopping ? 'Stopping…' : 'Stop');
+            .text(stopping ? WarmPilotAdmin.strings.stopping : WarmPilotAdmin.strings.stop);
     }
 
     function stopLogAutoRefresh() {
@@ -129,7 +133,7 @@ jQuery(function ($) {
         );
         reportPage = Number(data.report_page || reportPage || 1);
         const reportPages = Number(data.report_pages || 1);
-        $('.warmpilot-report-page').text('Page ' + reportPage + ' of ' + reportPages + ' · ' + Number(data.report_total || 0) + ' rows');
+        $('.warmpilot-report-page').text(formatPageOfRows(reportPage, reportPages, data.report_total));
         $('.warmpilot-report-prev').prop('disabled', reportPage <= 1);
         $('.warmpilot-report-next').prop('disabled', reportPage >= reportPages);
 
@@ -200,13 +204,13 @@ jQuery(function ($) {
         if (!jobId) return;
         updateManualControls('stopping');
         $.post(WarmPilotAdmin.ajaxUrl, payload({ action: 'warmpilot_stop', job_id: jobId }))
-            .done(() => setState('Stopping'))
+            .done(() => setState(WarmPilotAdmin.strings.stoppingState))
             .fail(() => updateManualControls('running'));
     });
     $('.warmpilot-reset').on('click', function () {
         if (!jobId || !confirm('Delete this report?')) return;
         $.post(WarmPilotAdmin.ajaxUrl, payload({ action: 'warmpilot_reset', job_id: jobId })).done(() => {
-            jobId = 0; processing = false; localStorage.removeItem('warmpilotJobId'); $tbody.empty(); $('.warmpilot-progress span').css('width', '0'); $('[data-stat]').text('0'); setState('Idle'); updateManualControls('idle');
+            jobId = 0; processing = false; localStorage.removeItem('warmpilotJobId'); $tbody.empty(); $('.warmpilot-progress span').css('width', '0'); $('[data-stat]').text('0'); setState(WarmPilotAdmin.strings.idle); updateManualControls('idle');
         });
     });
     $('.warmpilot-report-prev').on('click', function () { if (reportPage > 1) { reportPage--; status(); } });
@@ -293,20 +297,21 @@ jQuery(function ($) {
     function renderJobLogs(logs) {
         $('.warmpilot-logs-table tbody').html((logs || []).map((row) => {
             const id = Number(row.id || 0);
-            const type = String(row.type || 'Manual');
+            const typeKey = String(row.type_key || 'manual');
+            const typeLabel = String(row.type || WarmPilotAdmin.strings.manual);
             const running = String(row.status || '') === 'running';
             return '<tr data-job-id="' + id + '">' +
-                '<td><span class="warmpilot-job-type warmpilot-job-type-' + esc(type.toLowerCase()) + '">' + esc(type) + '</span></td>' +
+                '<td><span class="warmpilot-job-type warmpilot-job-type-' + esc(typeKey) + '">' + esc(typeLabel) + '</span></td>' +
                 '<td>' + esc(row.task || '—') + '</td><td>#' + id + '</td>' +
                 '<td>' + esc(row.started_at || '—') + '</td><td>' + esc(row.finished_at || '—') + '</td>' +
-                '<td>' + esc(row.status || '') + '</td><td>' + Number(row.total || 0) + '</td>' +
+                '<td>' + esc(row.status_label || row.status || '') + '</td><td>' + Number(row.total || 0) + '</td>' +
                 '<td>' + Number(row.successful || 0) + '</td><td>' + Number(row.failed || 0) + '</td>' +
                 '<td class="warmpilot-actions-col"><div class="warmpilot-row-actions warmpilot-job-log-actions">' +
-                '<button type="button" class="button warmpilot-view-job-log">View log</button>' +
-                '<button type="button" class="button warmpilot-view-job-success">Success</button>' +
-                '<button type="button" class="button warmpilot-view-job-errors">Errors</button>' +
-                '<button type="button" class="button warmpilot-export-job-log">CSV</button>' +
-                '<button type="button" class="button button-link-delete warmpilot-delete-job-log"' + (running ? ' disabled' : '') + '>Delete</button>' +
+                '<button type="button" class="button warmpilot-view-job-log">' + esc(WarmPilotAdmin.strings.viewLog) + '</button>' +
+                '<button type="button" class="button warmpilot-view-job-success">' + esc(WarmPilotAdmin.strings.success) + '</button>' +
+                '<button type="button" class="button warmpilot-view-job-errors">' + esc(WarmPilotAdmin.strings.errorsLabel) + '</button>' +
+                '<button type="button" class="button warmpilot-export-job-log">' + esc(WarmPilotAdmin.strings.csv) + '</button>' +
+                '<button type="button" class="button button-link-delete warmpilot-delete-job-log"' + (running ? ' disabled' : '') + '>' + esc(WarmPilotAdmin.strings.delete) + '</button>' +
                 '</div></td></tr>';
         }).join(''));
     }
@@ -343,7 +348,7 @@ jQuery(function ($) {
         );
         logPage = Number(data.report_page || logPage || 1);
         const pages = Number(data.report_pages || 1);
-        $('.warmpilot-log-page').text('Page ' + logPage + ' of ' + pages + ' · ' + Number(data.report_total || 0) + ' rows');
+        $('.warmpilot-log-page').text(formatPageOfRows(logPage, pages, data.report_total));
         $('.warmpilot-log-prev').prop('disabled', logPage <= 1);
         $('.warmpilot-log-next').prop('disabled', logPage >= pages);
         $('#warmpilot-log-results tbody').html((data.items || []).map((row) => {
@@ -483,8 +488,8 @@ jQuery(function ($) {
     $('.warmpilot-run-cron').on('click', function () {
         const $button = $(this), $row = $button.closest('tr'), id = $row.data('profile-id');
         $row.attr('data-task-status', 'starting');
-        $row.find('.warmpilot-task-status').attr('class', 'warmpilot-task-status warmpilot-task-status-starting').text('Starting…');
-        $button.prop('disabled', true).text('Starting…');
+        $row.find('.warmpilot-task-status').attr('class', 'warmpilot-task-status warmpilot-task-status-starting').text(WarmPilotAdmin.strings.starting);
+        $button.prop('disabled', true).text(WarmPilotAdmin.strings.starting);
         scheduleCronTransitionPolling(5000);
         $.post(WarmPilotAdmin.ajaxUrl, payload({ action: 'warmpilot_run_cron_profile', profile_id: id })).done((res) => {
             if (!res.success) {
@@ -500,9 +505,10 @@ jQuery(function ($) {
         if (!confirm('Stop the currently running job for this cron task?')) return;
         const $button = $(this), $row = $button.closest('tr'), id = $row.data('profile-id');
         $row.attr('data-task-status', 'stopping');
-        const currentJob = $row.find('.warmpilot-task-status').text().match(/Job #\d+/)?.[0] || '';
-        $row.find('.warmpilot-task-status').attr('class', 'warmpilot-task-status warmpilot-task-status-stopping').text('Stopping' + (currentJob ? ' · ' + currentJob : '…'));
-        $button.prop('disabled', true).text('Stopping…');
+        const activeJobId = $row.find('.warmpilot-task-status').data('active-job-id');
+        const jobSuffix = activeJobId ? ' · ' + WarmPilotAdmin.strings.jobHash.replace('%d', activeJobId) : '…';
+        $row.find('.warmpilot-task-status').attr('class', 'warmpilot-task-status warmpilot-task-status-stopping').text(WarmPilotAdmin.strings.stoppingState + jobSuffix);
+        $button.prop('disabled', true).text(WarmPilotAdmin.strings.stopping);
         scheduleCronTransitionPolling(5000);
         $.post(WarmPilotAdmin.ajaxUrl, payload({ action: 'warmpilot_stop_cron_profile', profile_id: id })).done((res) => {
             if (!res.success) {

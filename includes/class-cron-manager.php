@@ -1,4 +1,11 @@
 <?php
+/**
+ * Cron profile scheduling: interval math, a minimal 5-field cron expression
+ * evaluator, and the periodic cron_tick() that starts/advances due jobs.
+ *
+ * @package WarmPilot
+ */
+
 namespace YotaX\WarmPilot;
 
 use DateTimeImmutable;
@@ -13,19 +20,34 @@ defined('ABSPATH') || exit;
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+/**
+ * Computes cron profile schedules and drives the periodic tick that starts
+ * and advances due jobs.
+ */
 class Cron_Manager extends Job_Runner {
+    /**
+     * Recomputes next_run for every cron profile (e.g. after a version upgrade
+     * changes how schedules are calculated); leaves invalid legacy custom
+     * expressions untouched until the user edits them.
+     */
     protected function realign_existing_schedules(): void {
         global $wpdb;
         $rows = $wpdb->get_results("SELECT id, interval_key, cron_expression FROM {$this->schedules_table}") ?: [];
         foreach ($rows as $row) {
             try {
-                $nextRun = $this->aligned_next_run_mysql((string)$row->interval_key, null, $row->cron_expression ?: null);
-                $wpdb->update($this->schedules_table, ['next_run'=>$nextRun], ['id'=>(int)$row->id]);
-            } catch (Throwable $e) {
+                $next_run = $this->aligned_next_run_mysql((string)$row->interval_key, null, $row->cron_expression ?: null);
+                $wpdb->update($this->schedules_table, ['next_run'=>$next_run], ['id'=>(int)$row->id]);
+            } catch (Throwable $e) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
                 // Invalid legacy custom expressions remain unchanged until edited.
             }
         }
     }
+    /**
+     * Filters "cron_schedules" to register WarmPilot's custom recurrence intervals.
+     *
+     * @param array<string, array{interval: int, display: string}> $schedules Existing registered schedules.
+     * @return array<string, array{interval: int, display: string}> Schedules with WarmPilot's intervals added.
+     */
     public function cron_schedules(array $schedules): array {
         $schedules['warmpilot_minute'] = ['interval'=>60, 'display'=>'Every minute'];
         $schedules['five_minutes'] = ['interval'=>300, 'display'=>'Every 5 minutes'];
@@ -33,6 +55,11 @@ class Cron_Manager extends Job_Runner {
         $schedules['weekly'] = ['interval'=>604800, 'display'=>'Weekly'];
         return $schedules;
     }
+    /**
+     * Fetches every cron profile along with its currently-running job (if any).
+     *
+     * @return object[] Profile rows augmented with active_job_id/active_stop_requested.
+     */
     protected function get_cron_profiles(): array {
         global $wpdb;
         return $wpdb->get_results(
@@ -51,6 +78,11 @@ class Cron_Manager extends Job_Runner {
              ORDER BY s.id DESC"
         ) ?: [];
     }
+    /**
+     * Resolves an interval_key to its length in seconds.
+     *
+     * @param string $key One of the recurrence interval keys used by cron profiles.
+     */
     protected function interval_seconds(string $key): int {
         return match ($key) {
             'warmpilot_minute' => 60,
@@ -63,6 +95,11 @@ class Cron_Manager extends Job_Runner {
             default => 3600,
         };
     }
+    /**
+     * Converts a UTC MySQL datetime string to the site's local timezone for display.
+     *
+     * @param string|null $value UTC MySQL datetime, or null/empty for "not set".
+     */
     protected function display_utc_mysql(?string $value): string {
         if (!$value) return '—';
         try {
@@ -71,6 +108,11 @@ class Cron_Manager extends Job_Runner {
             return $value;
         }
     }
+    /**
+     * Builds the human-readable schedule label shown in the cron tasks table.
+     *
+     * @param object $profile Cron profile row (interval_key, cron_expression).
+     */
     protected function schedule_label(object $profile): string {
         $labels = [
             'warmpilot_minute' => 'Every minute',
@@ -86,6 +128,14 @@ class Cron_Manager extends Job_Runner {
         }
         return $labels[$profile->interval_key] ?? (string)$profile->interval_key;
     }
+    /**
+     * Computes the next aligned run time (UTC MySQL datetime) for a cron profile's interval.
+     *
+     * @param string      $key             Recurrence interval key, or "custom_cron".
+     * @param int|null    $from_timestamp  Unix timestamp to compute from; defaults to now.
+     * @param string|null $cron_expression 5-field cron expression, required when $key is "custom_cron".
+     * @throws InvalidArgumentException If $key is "custom_cron" and $cron_expression cannot be evaluated.
+     */
     protected function aligned_next_run_mysql(string $key, ?int $from_timestamp = null, ?string $cron_expression = null): string {
         $tz = wp_timezone();
         $base = (new DateTimeImmutable('@' . ($from_timestamp ?: time())))->setTimezone($tz);
@@ -112,12 +162,12 @@ class Cron_Manager extends Job_Runner {
                 $next = $next->modify('+' . $add . ' minutes');
                 break;
             case 'hourly':
-                $nextHour = $now->modify('+1 hour');
-                $next = $nextHour->setTime((int)$nextHour->format('H'), 0, 0);
+                $next_hour = $now->modify('+1 hour');
+                $next = $next_hour->setTime((int)$next_hour->format('H'), 0, 0);
                 break;
             case 'twicedaily':
-                $todayNoon = $now->setTime(12, 0, 0);
-                $next = $now < $todayNoon ? $todayNoon : $now->modify('+1 day')->setTime(0, 0, 0);
+                $today_noon = $now->setTime(12, 0, 0);
+                $next = $now < $today_noon ? $today_noon : $now->modify('+1 day')->setTime(0, 0, 0);
                 break;
             case 'daily':
                 $next = $now->modify('+1 day')->setTime(0, 0, 0);
@@ -126,15 +176,21 @@ class Cron_Manager extends Job_Runner {
                 $next = $now->modify('next monday')->setTime(0, 0, 0);
                 break;
             default:
-                $nextHour = $now->modify('+1 hour');
-                $next = $nextHour->setTime((int)$nextHour->format('H'), 0, 0);
+                $next_hour = $now->modify('+1 hour');
+                $next = $next_hour->setTime((int)$next_hour->format('H'), 0, 0);
         }
         return $next->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
     }
+    /**
+     * Finds the next minute (within 2 years) matching a 5-field cron expression.
+     *
+     * @param string            $expression 5-field cron expression (minute hour day month weekday).
+     * @param DateTimeImmutable $from       Point in time to search forward from (exclusive).
+     */
     protected function cron_next_occurrence(string $expression, DateTimeImmutable $from): ?DateTimeImmutable {
         $parts = preg_split('/\s+/', trim($expression));
         if (count($parts) !== 5) return null;
-        [$minuteExpr, $hourExpr, $dayExpr, $monthExpr, $weekdayExpr] = $parts;
+        [$minute_expr, $hour_expr, $day_expr, $month_expr, $weekday_expr] = $parts;
         if (!$this->validate_cron_expression($expression)) return null;
 
         $candidate = $from->setTime((int)$from->format('H'), (int)$from->format('i'), 0)->modify('+1 minute');
@@ -145,19 +201,24 @@ class Cron_Manager extends Job_Runner {
             $day = (int)$candidate->format('j');
             $month = (int)$candidate->format('n');
             $weekday = (int)$candidate->format('w');
-            $domMatch = $this->cron_field_matches($dayExpr, $day, 1, 31);
-            $dowMatch = $this->cron_field_matches($weekdayExpr, $weekday, 0, 7, true);
-            $dayMatch = ($dayExpr !== '*' && $weekdayExpr !== '*') ? ($domMatch || $dowMatch) : ($domMatch && $dowMatch);
-            if ($this->cron_field_matches($minuteExpr, $minute, 0, 59)
-                && $this->cron_field_matches($hourExpr, $hour, 0, 23)
-                && $dayMatch
-                && $this->cron_field_matches($monthExpr, $month, 1, 12)) {
+            $dom_match = $this->cron_field_matches($day_expr, $day, 1, 31);
+            $dow_match = $this->cron_field_matches($weekday_expr, $weekday, 0, 7, true);
+            $day_match = ($day_expr !== '*' && $weekday_expr !== '*') ? ($dom_match || $dow_match) : ($dom_match && $dow_match);
+            if ($this->cron_field_matches($minute_expr, $minute, 0, 59)
+                && $this->cron_field_matches($hour_expr, $hour, 0, 23)
+                && $day_match
+                && $this->cron_field_matches($month_expr, $month, 1, 12)) {
                 return $candidate;
             }
             $candidate = $candidate->modify('+1 minute');
         }
         return null;
     }
+    /**
+     * Validates that a string is a well-formed 5-field cron expression.
+     *
+     * @param string $expression Candidate cron expression.
+     */
     protected function validate_cron_expression(string $expression): bool {
         $parts = preg_split('/\s+/', trim($expression));
         if (count($parts) !== 5) return false;
@@ -167,6 +228,13 @@ class Cron_Manager extends Job_Runner {
         }
         return true;
     }
+    /**
+     * Validates a single cron field (supports lists, ranges, and step values).
+     *
+     * @param string $field One comma-separated cron field, e.g. a step value or a range like "1-5,10".
+     * @param int    $min   Minimum value allowed for this field.
+     * @param int    $max   Maximum value allowed for this field.
+     */
     protected function cron_field_valid(string $field, int $min, int $max): bool {
         if ($field === '') return false;
         foreach (explode(',', $field) as $part) {
@@ -184,15 +252,22 @@ class Cron_Manager extends Job_Runner {
         }
         return true;
     }
+    /**
+     * Both 0 and 7 mean Sunday in a weekday cron field; $value is remapped to
+     * 7 when comparing against a "7" boundary so both spellings match.
+     *
+     * @param string $field   One comma-separated cron field.
+     * @param int    $value   Candidate value to test (e.g. current minute, hour, weekday).
+     * @param int    $min     Minimum value allowed for this field.
+     * @param int    $max     Maximum value allowed for this field.
+     * @param bool   $weekday Whether this field is the weekday field (enables the 0/7 = Sunday remap).
+     */
     protected function cron_field_matches(string $field, int $value, int $min, int $max, bool $weekday = false): bool {
-        if ($weekday && $value === 0 && str_contains($field, '7')) {
-            // Both 0 and 7 mean Sunday.
-        }
         foreach (explode(',', $field) as $part) {
             $step = 1;
-            if (str_contains($part, '/')) [$part, $stepText] = explode('/', $part, 2) + [1 => '1'];
-            else $stepText = '1';
-            $step = max(1, (int)$stepText);
+            if (str_contains($part, '/')) [$part, $step_text] = explode('/', $part, 2) + [1 => '1'];
+            else $step_text = '1';
+            $step = max(1, (int)$step_text);
             if ($part === '*') {
                 if ((($value - $min) % $step) === 0) return true;
                 continue;
@@ -202,17 +277,26 @@ class Cron_Manager extends Job_Runner {
             } else {
                 $start = $end = (int)$part;
             }
-            $testValue = ($weekday && $value === 0 && $start === 7) ? 7 : $value;
-            if ($testValue >= $start && $testValue <= $end && (($testValue - $start) % $step) === 0) return true;
+            $test_value = ($weekday && $value === 0 && $start === 7) ? 7 : $value;
+            if ($test_value >= $start && $test_value <= $end && (($test_value - $start) % $step) === 0) return true;
         }
         return false;
     }
+    /**
+     * Finds the shortest recurrence interval among all currently-enabled cron profiles.
+     *
+     * @return int Shortest interval in seconds, or 0 if no profile is enabled.
+     */
     protected function shortest_enabled_interval(): int {
         global $wpdb;
         $keys = $wpdb->get_col("SELECT interval_key FROM {$this->schedules_table} WHERE enabled=1") ?: [];
         if (!$keys) return 0;
         return min(array_map(fn($key) => $this->interval_seconds((string)$key), $keys));
     }
+    /**
+     * Registered on the warmpilot_cron_tick hook: starts any due cron profiles as new jobs,
+     * then advances already-running cron jobs until the time budget for this tick is spent.
+     */
     public function cron_tick(): void {
         global $wpdb;
         if (!$this->acquire_cron_lock()) return;
@@ -240,6 +324,9 @@ class Cron_Manager extends Job_Runner {
             $this->release_cron_lock();
         }
     }
+    /**
+     * Acquires the global cron-tick lock, stealing a stale lock older than 60 seconds.
+     */
     protected function acquire_cron_lock(): bool {
         $created = add_option('warmpilot_cron_lock', time(), '', false);
         if ($created) return true;
@@ -251,9 +338,18 @@ class Cron_Manager extends Job_Runner {
         }
         return false;
     }
+    /**
+     * Releases the global cron-tick lock.
+     */
     protected function release_cron_lock(): void {
         delete_option('warmpilot_cron_lock');
     }
+    /**
+     * Advances each running cron job batch by batch until it stops or the tick's time budget runs out.
+     *
+     * @param int[] $job_ids  IDs of running cron-triggered jobs.
+     * @param float $deadline microtime(true) value after which processing must stop.
+     */
     protected function process_cron_jobs(array $job_ids, float $deadline): void {
         foreach ($job_ids as $job_id) {
             while (microtime(true) < $deadline) {

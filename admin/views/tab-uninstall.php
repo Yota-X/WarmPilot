@@ -1,4 +1,10 @@
 <?php
+/**
+ * "Data & Uninstall" tab: the delete-data-on-uninstall opt-in.
+ *
+ * @package WarmPilot
+ */
+
 defined('ABSPATH') || exit;
 ?>
             <div id="warmpilot-uninstall-tab" class="warmpilot-tab-panel">

@@ -1,4 +1,10 @@
 <?php
+/**
+ * URL parsing, normalization, and same-site scope matching (SSRF guard rails).
+ *
+ * @package WarmPilot
+ */
+
 namespace YotaX\WarmPilot;
 
 use Pdp\Domain;
@@ -7,7 +13,17 @@ use Throwable;
 
 defined('ABSPATH') || exit;
 
+/**
+ * Normalizes and canonicalizes URLs, and decides whether a host falls within
+ * the allowed crawl scope using the bundled Public Suffix List.
+ */
 class Url_Normalizer extends Settings {
+    /**
+     * Matches a URL against a "*"-wildcard pattern (the pattern is treated as a full regex anchor).
+     *
+     * @param string $pattern Wildcard pattern, e.g. "https://example.com/*".
+     * @param string $url     Fully-qualified URL to test.
+     */
     protected function wildcard_match(string $pattern, string $url): bool {
         $pattern = trim($pattern);
         if ($pattern === '') return false;
@@ -20,6 +36,10 @@ class Url_Normalizer extends Settings {
      * Patterns written for any allowed host apply to its registrable domain and
      * subdomains, as resolved through the bundled Public Suffix List. The path,
      * query string, scheme and wildcard syntax are still respected.
+     *
+     * @param string   $pattern       Include/exclude wildcard pattern.
+     * @param string   $url           Fully-qualified URL to test.
+     * @param string[] $allowed_hosts Hosts considered in-scope for this job.
      */
     protected function allowed_pattern_match(string $pattern, string $url, array $allowed_hosts = []): bool {
         if ($this->wildcard_match($pattern, $url)) {
@@ -49,6 +69,12 @@ class Url_Normalizer extends Settings {
 
         return $this->wildcard_match($pattern, $host_normalized_url);
     }
+    /**
+     * Builds the list of in-scope hosts for a job from its entry/sitemap URLs plus the site's own host.
+     *
+     * @param array<string, mixed> $settings Job settings containing start_urls/sitemap_urls.
+     * @return string[] Lower-cased, deduplicated hostnames.
+     */
     protected function allowed_hosts(array $settings): array {
         $hosts = [];
 
@@ -69,6 +95,12 @@ class Url_Normalizer extends Settings {
 
         return array_values(array_unique($hosts));
     }
+    /**
+     * Resolves a host to its registrable domain via the bundled Public Suffix List.
+     *
+     * @param string $host Hostname to resolve.
+     * @return string The registrable domain, or the original host if resolution fails or is an IP.
+     */
     protected function domain_root(string $host): string {
         $host = strtolower(trim(rtrim($host, '.')));
         if ($host === '' || filter_var($host, FILTER_VALIDATE_IP)) {
@@ -87,6 +119,12 @@ class Url_Normalizer extends Settings {
             return $host;
         }
     }
+    /**
+     * Checks whether a host equals, or is a subdomain of, one of the allowed hosts' registrable domains.
+     *
+     * @param string   $host          Hostname to check.
+     * @param string[] $allowed_hosts Hosts considered in-scope for this job.
+     */
     protected function host_matches_allowed_roots(string $host, array $allowed_hosts): bool {
         $host = strtolower(rtrim($host, '.'));
         if ($host === '') {
@@ -103,15 +141,32 @@ class Url_Normalizer extends Settings {
 
         return false;
     }
+    /**
+     * Checks whether a host is the current site's own domain or one of its subdomains.
+     *
+     * @param string $host Hostname to check.
+     */
     protected function is_site_domain_or_subdomain(string $host): bool {
         return $this->host_matches_allowed_roots($host, $this->allowed_hosts([
             'start_urls' => home_url('/'),
             'sitemap_urls' => '',
         ]));
     }
+    /**
+     * Splits a textarea-style string into trimmed, non-empty lines.
+     *
+     * @param string $text Newline-separated text.
+     * @return string[] Trimmed, non-empty lines.
+     */
     protected function lines(string $text): array {
         return array_values(array_filter(array_map('trim', preg_split('/\R/u', $text) ?: [])));
     }
+    /**
+     * Builds a canonical string key for a URL (sorted query args, resolved dot-segments,
+     * default ports stripped) used to deduplicate URLs within a job.
+     *
+     * @param string $url Fully-qualified URL.
+     */
     protected function canonical_url_key(string $url): string {
         $parts = wp_parse_url($url);
         if (!$parts || empty($parts['scheme']) || empty($parts['host'])) {
@@ -145,12 +200,22 @@ class Url_Normalizer extends Settings {
 
         return $scheme . '://' . $host . $port_text . $normalized_path . $query;
     }
+    /**
+     * Recursively sorts an array (and any nested arrays) by key, in place.
+     *
+     * @param array<int|string, mixed> $value Array to sort, by reference.
+     */
     protected function recursive_ksort(array &$value): void {
         ksort($value);
         foreach ($value as &$child) {
             if (is_array($child)) $this->recursive_ksort($child);
         }
     }
+    /**
+     * Validates and normalizes a URL to an http(s) absolute form, or null if invalid.
+     *
+     * @param string $url Raw URL string.
+     */
     protected function normalize_url(string $url): ?string {
         $url = trim(html_entity_decode($url, ENT_QUOTES | ENT_HTML5));
         if ($url === '') return null;
@@ -166,6 +231,12 @@ class Url_Normalizer extends Settings {
         $query = isset($parts['query']) && $parts['query'] !== '' ? '?' . $parts['query'] : '';
         return esc_url_raw($scheme . '://' . $host . $port . $path . $query);
     }
+    /**
+     * Resolves a possibly-relative URL (href/src attribute value) against a base page URL.
+     *
+     * @param string $base     Absolute URL of the page the link/asset was found on.
+     * @param string $relative Raw href/src value, which may be absolute, protocol-relative, or relative.
+     */
     protected function absolute_url(string $base, string $relative): ?string {
         $relative = trim(html_entity_decode($relative, ENT_QUOTES | ENT_HTML5));
         if ($relative === '' || str_starts_with($relative, '#') || preg_match('~^(mailto:|tel:|javascript:|data:)~i', $relative)) {

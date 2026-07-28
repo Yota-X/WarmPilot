@@ -1,4 +1,10 @@
 <?php
+/**
+ * Full data removal, run only when the user has opted in via the uninstall setting.
+ *
+ * @package WarmPilot
+ */
+
 namespace YotaX\WarmPilot;
 
 defined('ABSPATH') || exit;
@@ -7,10 +13,17 @@ defined('ABSPATH') || exit;
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+/**
+ * Drops WarmPilot's custom tables and options when, and only when, the
+ * "delete data on uninstall" setting has been enabled.
+ */
 final class Uninstaller {
     private const LOG_OPTION = 'warmpilot_log_settings';
     private const CRON_HOOK = 'warmpilot_cron_tick';
 
+    /**
+     * Entry point called from uninstall.php; no-ops unless the user opted in to full data removal.
+     */
     public static function run(): void {
         $settings = get_option(self::LOG_OPTION, []);
         if (empty($settings['delete_data_on_uninstall'])) {

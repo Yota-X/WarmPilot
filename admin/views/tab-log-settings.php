@@ -1,4 +1,10 @@
 <?php
+/**
+ * "Log settings" tab: log-retention count/age settings.
+ *
+ * @package WarmPilot
+ */
+
 defined('ABSPATH') || exit;
 ?>
             <div id="warmpilot-log-settings-tab" class="warmpilot-tab-panel">

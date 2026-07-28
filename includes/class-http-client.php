@@ -1,4 +1,10 @@
 <?php
+/**
+ * Concurrent HTTP warming requests with retry handling.
+ *
+ * @package WarmPilot
+ */
+
 namespace YotaX\WarmPilot;
 
 use WpOrg\Requests\Requests;
@@ -7,7 +13,20 @@ use Throwable;
 
 defined('ABSPATH') || exit;
 
+/**
+ * Issues concurrent HTTP requests for a batch of queued URLs, with retry
+ * handling for transient failures.
+ */
 class Http_Client extends Url_Normalizer {
+    /**
+     * Requests a batch of items concurrently, retrying failed/transient results up to the configured retry count.
+     *
+     * @param object[]              $items        Job items to request (each with ->id and ->url).
+     * @param array<string, string> $headers      Parsed request headers to send with every request.
+     * @param array<string, mixed>  $settings     Job settings (timeout, ssl_verify, retry_count, retry_delay_seconds, ...).
+     * @param bool                  $capture_body Whether to keep response bodies (needed for HTML/sitemap link discovery).
+     * @return array<int, array<string, mixed>> Per-item-id result: code, time, headers, body, error, attempts.
+     */
     protected function multi_request_with_retries(array $items, array $headers, array $settings, bool $capture_body = true): array {
         $remaining = array_values($items);
         $final = [];
@@ -28,10 +47,24 @@ class Http_Client extends Url_Normalizer {
         }
         return $final;
     }
+    /**
+     * Decides whether a request result qualifies for a retry (network error, timeout, 408/429, or 5xx).
+     *
+     * @param array<string, mixed> $result Single request result (code, error, ...).
+     */
     protected function should_retry_result(array $result): bool {
         $code = (int)($result['code'] ?? 0);
         return !empty($result['error']) || $code === 0 || $code === 408 || $code === 429 || $code >= 500;
     }
+    /**
+     * Issues a single concurrent batch of GET requests (no retries) and normalizes the results.
+     *
+     * @param object[]              $items        Job items to request (each with ->id and ->url).
+     * @param array<string, string> $headers      Parsed request headers to send with every request.
+     * @param array<string, mixed>  $settings     Job settings (timeout, ssl_verify, ...).
+     * @param bool                  $capture_body Whether to keep response bodies.
+     * @return array<int, array<string, mixed>> Per-item-id result: code, time, headers, body, error.
+     */
     protected function multi_request(array $items, array $headers, array $settings, bool $capture_body = true): array {
         $requests = [];
         foreach ($items as $item) {
@@ -88,6 +121,12 @@ class Http_Client extends Url_Normalizer {
 
         return $results;
     }
+    /**
+     * Lower-cases header names and coerces values to arrays of strings.
+     *
+     * @param array<string, mixed> $headers Raw response headers keyed by name.
+     * @return array<string, string[]> Normalized headers.
+     */
     protected function normalize_response_headers(array $headers): array {
         $normalized = [];
         foreach ($headers as $name => $values) {
@@ -95,6 +134,12 @@ class Http_Client extends Url_Normalizer {
         }
         return $normalized;
     }
+    /**
+     * Parses a "Header: value" per-line textarea setting into a header name/value map.
+     *
+     * @param string $text One "Header: value" pair per line.
+     * @return array<string, string> Parsed headers.
+     */
     protected function parse_headers(string $text): array {
         $headers = [];
         foreach ($this->lines($text) as $line) {
@@ -104,6 +149,12 @@ class Http_Client extends Url_Normalizer {
         }
         return $headers;
     }
+    /**
+     * Reads a single header's value (case-insensitive), taking the last value if repeated.
+     *
+     * @param array<string, mixed> $headers Normalized response headers.
+     * @param string               $name    Header name to look up.
+     */
     protected function header_value(array $headers, string $name): string {
         $value = $headers[strtolower($name)] ?? [];
         if (is_array($value)) {
@@ -111,6 +162,11 @@ class Http_Client extends Url_Normalizer {
         }
         return (string) $value;
     }
+    /**
+     * Renders every response header whose name contains "cache" as "Name: value" lines.
+     *
+     * @param array<string, mixed> $headers Normalized response headers.
+     */
     protected function cache_headers_text(array $headers): string {
         $lines = [];
         foreach ($headers as $name => $values) {

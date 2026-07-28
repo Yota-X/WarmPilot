@@ -1,4 +1,11 @@
 <?php
+/**
+ * Job creation and batch processing: seeds URLs, runs warm/verify request
+ * batches, and updates per-item and per-job status.
+ *
+ * @package WarmPilot
+ */
+
 namespace YotaX\WarmPilot;
 
 use WP_Error;
@@ -10,12 +17,29 @@ defined('ABSPATH') || exit;
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+/**
+ * Creates warming jobs and processes them in worker-sized batches until finished.
+ */
 class Job_Runner extends Job_Repository {
+    /**
+     * Last error explaining why create_job()/process_job_batch() could not proceed.
+     *
+     * @var string
+     */
     protected string $last_job_error = '';
 
+    /**
+     * Returns the last job-creation/processing error message, if any.
+     */
     protected function get_last_job_error(): string {
         return $this->last_job_error;
     }
+    /**
+     * Acquires a per-job processing lock (via a transient-like option), stealing
+     * a stale lock older than 5 minutes to recover from a crashed request.
+     *
+     * @param int $job_id Job ID to lock.
+     */
     protected function acquire_job_lock(int $job_id): bool {
         $key = 'warmpilot_job_lock_' . $job_id;
         $created = add_option($key, time(), '', false);
@@ -28,9 +52,23 @@ class Job_Runner extends Job_Repository {
         }
         return false;
     }
+    /**
+     * Releases a job's processing lock.
+     *
+     * @param int $job_id Job ID to unlock.
+     */
     protected function release_job_lock(int $job_id): void {
         delete_option('warmpilot_job_lock_' . $job_id);
     }
+    /**
+     * Creates a job row and queues its seed URLs (entry + sitemap URLs); marks
+     * the job finished immediately if no seed URL could be queued.
+     *
+     * @param array<string, mixed> $settings       Job settings.
+     * @param int|null             $profile_id     Cron profile this job belongs to, or null for a manual job.
+     * @param string               $trigger_source One of: manual, cron, cron_manual.
+     * @return int The new job ID, or 0 if the job could not be created/seeded.
+     */
     protected function create_job(array $settings, ?int $profile_id = null, string $trigger_source = 'manual'): int {
         global $wpdb;
         $this->last_job_error = '';
@@ -77,6 +115,13 @@ class Job_Runner extends Job_Repository {
         $this->refresh_job_totals($job_id);
         return $job_id;
     }
+    /**
+     * Processes one batch of a job's queued items under a lock, preventing concurrent
+     * overlapping runs of the same job.
+     *
+     * @param int $job_id Job ID to process.
+     * @return array<string, mixed>|WP_Error Status payload, or a WP_Error if already locked.
+     */
     protected function process_job_batch(int $job_id): array|WP_Error {
         if (!$this->acquire_job_lock($job_id)) {
             return new WP_Error('job_locked', 'This job batch is already being processed.');
@@ -87,6 +132,13 @@ class Job_Runner extends Job_Repository {
             $this->release_job_lock($job_id);
         }
     }
+    /**
+     * Fetches one worker-sized batch of queued items, warms them (and optionally
+     * verifies + discovers further URLs), then records results.
+     *
+     * @param int $job_id Job ID to process.
+     * @return array<string, mixed>|WP_Error Status payload, or a WP_Error if the job no longer exists.
+     */
     protected function process_locked_job_batch(int $job_id): array|WP_Error {
         global $wpdb;
 
@@ -191,6 +243,16 @@ class Job_Runner extends Job_Repository {
 
         return $this->status_payload($job_id);
     }
+    /**
+     * Builds the live-report payload for a job: totals, progress, speed, and a page of report rows.
+     *
+     * @param int  $job_id      Job ID.
+     * @param int  $report_page 1-based page of report rows to return.
+     * @param int  $per_page    Report rows per page.
+     * @param bool $errors_only Restrict the report rows to failed/skipped items.
+     * @param bool $success_only Restrict the report rows to successful items (ignored if $errors_only is true).
+     * @return array<string, mixed> Status/progress payload consumed by the admin UI.
+     */
     protected function status_payload(int $job_id, int $report_page = 1, int $per_page = 100, bool $errors_only = false, bool $success_only = false): array {
         global $wpdb;
         $this->refresh_job_totals($job_id);

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin page shell: tab navigation plus each tab's view.
+ *
+ * @package WarmPilot
+ */
+
 defined('ABSPATH') || exit;
 ?>
         <div class="wrap warmpilot-wrap">

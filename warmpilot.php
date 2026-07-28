@@ -1,19 +1,23 @@
 <?php
 /**
  * Plugin Name: WarmPilot
+ * Plugin URI: https://github.com/Yota-X/WarmPilot
  * Description: Multi-worker cache warming with live reporting, URL crawling, cron profiles, retries, and asset preloading.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Yota-X
+ * Author URI: https://github.com/Yota-X
  * Requires at least: 6.2
  * Requires PHP: 8.1
  * Text Domain: warmpilot
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ *
+ * @package WarmPilot
  */
 
 defined('ABSPATH') || exit;
 
-define('WARMPILOT_VERSION', '1.0.0');
+define('WARMPILOT_VERSION', '1.0.1');
 define('WARMPILOT_FILE', __FILE__);
 define('WARMPILOT_PATH', plugin_dir_path(__FILE__));
 define('WARMPILOT_URL', plugin_dir_url(__FILE__));

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Log-retention rotation for warming job history.
+ *
+ * @package WarmPilot
+ */
+
 namespace YotaX\WarmPilot;
 
 defined('ABSPATH') || exit;
@@ -8,12 +14,23 @@ defined('ABSPATH') || exit;
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+/**
+ * Applies the configured retention (count and age) to finished job logs.
+ */
 class Log_Rotation extends Log_Repository {
+    /**
+     * Runs global log rotation once a specific job has finished.
+     *
+     * @param int $job_id Job ID that just finished processing.
+     */
     protected function apply_log_rotation_for_job(int $job_id): void {
         $job = $this->get_job($job_id);
         if (!$job || $job->status === 'running') return;
         $this->apply_global_log_rotation();
     }
+    /**
+     * Deletes finished jobs (and their items) beyond the configured retention count/age.
+     */
     protected function apply_global_log_rotation(): void {
         global $wpdb;
         $settings = wp_parse_args(get_option(self::LOG_OPTION, []), self::default_log_settings());

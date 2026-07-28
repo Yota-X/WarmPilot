@@ -1,9 +1,21 @@
 <?php
+/**
+ * Admin menu registration, asset enqueueing, and the settings page views.
+ *
+ * @package WarmPilot
+ */
+
 namespace YotaX\WarmPilot;
 
 defined('ABSPATH') || exit;
 
+/**
+ * Renders the WarmPilot admin page (Tools > WarmPilot) and its assets.
+ */
 class Admin extends Log_Rotation {
+    /**
+     * Registers the WarmPilot admin page under Tools.
+     */
     public function admin_menu(): void {
         add_management_page(
             __('WarmPilot', 'warmpilot'),
@@ -13,6 +25,11 @@ class Admin extends Log_Rotation {
             [$this, 'render_admin']
         );
     }
+    /**
+     * Enqueues the admin CSS/JS only on WarmPilot's own admin page.
+     *
+     * @param string $hook Current admin page hook suffix.
+     */
     public function enqueue_assets(string $hook): void {
         if ($hook !== 'tools_page_warmpilot') {
             return;
@@ -28,9 +45,29 @@ class Admin extends Log_Rotation {
                 'stopped' => __('Stopped', 'warmpilot'),
                 'finished' => __('Finished', 'warmpilot'),
                 'error' => __('Request failed.', 'warmpilot'),
+                'idle' => __('Idle', 'warmpilot'),
+                'stop' => __('Stop', 'warmpilot'),
+                'stopping' => __('Stopping…', 'warmpilot'),
+                'stoppingState' => __('Stopping', 'warmpilot'),
+                /* translators: %d: job ID. */
+                'jobHash' => __('Job #%d', 'warmpilot'),
+                'viewLog' => __('View log', 'warmpilot'),
+                'success' => __('Success', 'warmpilot'),
+                'errorsLabel' => __('Errors', 'warmpilot'),
+                'csv' => __('CSV', 'warmpilot'),
+                'delete' => __('Delete', 'warmpilot'),
+                'manual' => __('Manual', 'warmpilot'),
+                'cron' => __('Cron', 'warmpilot'),
+                /* translators: %1$s: current page number, %2$s: total number of pages. */
+                'pageOfPages' => __('Page %1$s of %2$s', 'warmpilot'),
+                /* translators: %s: total number of rows. */
+                'rowsCount' => __('%s rows', 'warmpilot'),
             ],
         ]);
     }
+    /**
+     * Renders the WarmPilot admin page (all tabs), gated on manage_options.
+     */
     public function render_admin(): void {
         if (!current_user_can('manage_options')) {
             return;
@@ -39,6 +76,14 @@ class Admin extends Log_Rotation {
         $log_settings = wp_parse_args(get_option(self::LOG_OPTION, []), self::default_log_settings());
         require WARMPILOT_PATH . 'admin/views/page.php';
     }
+    /**
+     * Renders a labeled checkbox input bound to a settings key.
+     *
+     * @param string               $name      Settings key / input name.
+     * @param string               $label     Visible label text (already translated by the caller).
+     * @param array<string, mixed> $settings  Settings array to read the current value from.
+     * @param string               $id_prefix Optional prefix for the input's id attribute (to avoid duplicate ids across tabs).
+     */
     protected function checkbox(string $name, string $label, array $settings, string $id_prefix = ''): void {
         ?>
         <label class="warmpilot-check">
@@ -47,6 +92,9 @@ class Admin extends Log_Rotation {
         </label>
         <?php
     }
+    /**
+     * Renders the "Cron environment" diagnostics card (detected mode, heartbeat, recommended check interval).
+     */
     protected function render_cron_environment(): void {
         $disabled = defined('DISABLE_WP_CRON') && DISABLE_WP_CRON;
         $heartbeat = (int)get_option('warmpilot_cron_heartbeat', 0);
@@ -57,7 +105,6 @@ class Admin extends Log_Rotation {
         $mode = $disabled ? 'System cron mode' : 'WordPress traffic cron mode';
         $state = $disabled ? ($recent ? 'Active' : 'Needs verification') : 'Active';
         $state_class = $disabled && !$recent ? 'warning' : 'ok';
-        $path = untrailingslashit(ABSPATH);
         $command = '* * * * * cd /path/to/wordpress && /usr/bin/php wp-cron.php >/dev/null 2>&1';
         ?>
         <section class="warmpilot-card warmpilot-cron-environment">

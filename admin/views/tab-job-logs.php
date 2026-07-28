@@ -1,4 +1,10 @@
 <?php
+/**
+ * "Job Logs" tab: full job log list plus the read-only run log viewer.
+ *
+ * @package WarmPilot
+ */
+
 defined('ABSPATH') || exit;
 ?>
             <div id="warmpilot-log-tab" class="warmpilot-tab-panel">
@@ -11,29 +17,48 @@ defined('ABSPATH') || exit;
                     </div>
                     <div class="warmpilot-table-wrap warmpilot-logs-table-wrap">
                         <table class="widefat striped warmpilot-logs-table">
-                            <thead><tr><th>Type</th><th>Task</th><th>Job</th><th>Started</th><th>Finished</th><th>Status</th><th>Total</th><th>Successful</th><th>Failed</th><th class="warmpilot-actions-col">Actions</th></tr></thead>
+                            <thead><tr>
+                                <th><?php esc_html_e('Type', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Task', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Job', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Started', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Finished', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Status', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Total', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Successful', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Failed', 'warmpilot'); ?></th>
+                                <th class="warmpilot-actions-col"><?php esc_html_e('Actions', 'warmpilot'); ?></th>
+                            </tr></thead>
                             <tbody>
-                            <?php foreach ($this->get_all_job_logs() as $warmpilot_log) :
+                            <?php
+                            $warmpilot_job_status_labels = [
+                                'running' => __('Running', 'warmpilot'),
+                                'finished' => __('Finished', 'warmpilot'),
+                                'stopped' => __('Stopped', 'warmpilot'),
+                            ];
+                            foreach ($this->get_all_job_logs() as $warmpilot_log) :
                                 $warmpilot_is_cron = in_array($warmpilot_log->trigger_source, ['cron','cron_manual'], true);
-                                $warmpilot_type_label = $warmpilot_is_cron ? 'Cron' : 'Manual';
-                                $warmpilot_task_label = $warmpilot_is_cron ? ($warmpilot_log->profile_name ?: ('Deleted task #' . (int)$warmpilot_log->profile_id)) : '—';
+                                $warmpilot_type_key = $warmpilot_is_cron ? 'cron' : 'manual';
+                                $warmpilot_type_label = $warmpilot_is_cron ? __('Cron', 'warmpilot') : __('Manual', 'warmpilot');
+                                /* translators: %d: cron profile ID. */
+                                $warmpilot_task_label = $warmpilot_is_cron ? ($warmpilot_log->profile_name ?: sprintf(__('Deleted task #%d', 'warmpilot'), (int) $warmpilot_log->profile_id)) : '—';
                             ?>
                                 <tr data-job-id="<?php echo esc_attr($warmpilot_log->id); ?>">
-                                    <td><span class="warmpilot-job-type warmpilot-job-type-<?php echo esc_attr(strtolower($warmpilot_type_label)); ?>"><?php echo esc_html($warmpilot_type_label); ?></span></td>
+                                    <td><span class="warmpilot-job-type warmpilot-job-type-<?php echo esc_attr($warmpilot_type_key); ?>"><?php echo esc_html($warmpilot_type_label); ?></span></td>
                                     <td><?php echo esc_html($warmpilot_task_label); ?></td>
                                     <td>#<?php echo esc_html($warmpilot_log->id); ?></td>
                                     <td><?php echo esc_html($warmpilot_log->started_at ?: '—'); ?></td>
                                     <td><?php echo esc_html($warmpilot_log->finished_at ?: '—'); ?></td>
-                                    <td><?php echo esc_html($warmpilot_log->status); ?></td>
+                                    <td><?php echo esc_html($warmpilot_job_status_labels[$warmpilot_log->status] ?? $warmpilot_log->status); ?></td>
                                     <td><?php echo esc_html($warmpilot_log->total); ?></td>
                                     <td><?php echo esc_html($warmpilot_log->successful); ?></td>
                                     <td><?php echo esc_html($warmpilot_log->failed); ?></td>
                                     <td class="warmpilot-actions-col"><div class="warmpilot-row-actions warmpilot-job-log-actions">
-                                        <button type="button" class="button warmpilot-view-job-log">View log</button>
-                                        <button type="button" class="button warmpilot-view-job-success">Success</button>
-                                        <button type="button" class="button warmpilot-view-job-errors">Errors</button>
-                                        <button type="button" class="button warmpilot-export-job-log">CSV</button>
-                                        <button type="button" class="button button-link-delete warmpilot-delete-job-log" <?php disabled($warmpilot_log->status === 'running'); ?>>Delete</button>
+                                        <button type="button" class="button warmpilot-view-job-log"><?php esc_html_e('View log', 'warmpilot'); ?></button>
+                                        <button type="button" class="button warmpilot-view-job-success"><?php esc_html_e('Success', 'warmpilot'); ?></button>
+                                        <button type="button" class="button warmpilot-view-job-errors"><?php esc_html_e('Errors', 'warmpilot'); ?></button>
+                                        <button type="button" class="button warmpilot-export-job-log"><?php esc_html_e('CSV', 'warmpilot'); ?></button>
+                                        <button type="button" class="button button-link-delete warmpilot-delete-job-log" <?php disabled($warmpilot_log->status === 'running'); ?>><?php esc_html_e('Delete', 'warmpilot'); ?></button>
                                     </div></td>
                                 </tr>
                             <?php endforeach; ?>
@@ -57,22 +82,22 @@ defined('ABSPATH') || exit;
                     <div class="warmpilot-progress-meta warmpilot-log-progress-meta">—</div>
                     <div class="warmpilot-stats warmpilot-log-stats">
                         <?php foreach ([
-                            'total' => 'Total Visits',
-                            'successful' => 'Successful',
-                            'failed' => 'Failed',
-                            'skipped' => 'Skipped',
-                            'avg' => 'Avg. page load after warming (sec.)',
-                            'duration' => 'Duration',
-                            'speed' => 'Speed (pages / minute)',
+                            'total' => __('Total Visits', 'warmpilot'),
+                            'successful' => __('Successful', 'warmpilot'),
+                            'failed' => __('Failed', 'warmpilot'),
+                            'skipped' => __('Skipped', 'warmpilot'),
+                            'avg' => __('Avg. page load after warming (sec.)', 'warmpilot'),
+                            'duration' => __('Duration', 'warmpilot'),
+                            'speed' => __('Speed (pages / minute)', 'warmpilot'),
                         ] as $warmpilot_key => $warmpilot_label) : ?>
                             <div><strong data-log-stat="<?php echo esc_attr($warmpilot_key); ?>">0</strong><span><?php echo esc_html($warmpilot_label); ?></span></div>
                         <?php endforeach; ?>
                     </div>
                     <div class="warmpilot-report-pagination warmpilot-log-pagination">
-                        <button type="button" class="button warmpilot-log-prev" disabled>&larr; Previous</button>
-                        <span class="warmpilot-log-page">Page 1 of 1</span>
-                        <button type="button" class="button warmpilot-log-next" disabled>Next &rarr;</button>
-                        <label>Rows
+                        <button type="button" class="button warmpilot-log-prev" disabled>&larr; <?php esc_html_e('Previous', 'warmpilot'); ?></button>
+                        <span class="warmpilot-log-page"><?php echo esc_html(sprintf(/* translators: %1$s: current page number, %2$s: total number of pages. */ __('Page %1$s of %2$s', 'warmpilot'), '1', '1')); ?></span>
+                        <button type="button" class="button warmpilot-log-next" disabled><?php esc_html_e('Next', 'warmpilot'); ?> &rarr;</button>
+                        <label><?php esc_html_e('Rows', 'warmpilot'); ?>
                             <select class="warmpilot-log-per-page">
                                 <option value="50">50</option>
                                 <option value="100" selected>100</option>
@@ -84,8 +109,14 @@ defined('ABSPATH') || exit;
                     <div class="warmpilot-table-wrap warmpilot-log-table-wrap">
                         <table class="widefat striped" id="warmpilot-log-results">
                             <thead><tr>
-                                <th>Time</th><th>Depth</th><th>Type</th><th>URL</th>
-                                <th>Afterwards (sec.)</th><th>Code / Error</th><th>Content-Type</th><th>Cache headers</th>
+                                <th><?php esc_html_e('Time', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Depth', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Type', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('URL', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Afterwards (sec.)', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Code / Error', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Content-Type', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Cache headers', 'warmpilot'); ?></th>
                             </tr></thead>
                             <tbody></tbody>
                         </table>

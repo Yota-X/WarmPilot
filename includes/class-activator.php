@@ -1,4 +1,10 @@
 <?php
+/**
+ * Activation-time schema management: table creation and schema drift detection.
+ *
+ * @package WarmPilot
+ */
+
 namespace YotaX\WarmPilot;
 
 defined('ABSPATH') || exit;
@@ -8,7 +14,16 @@ defined('ABSPATH') || exit;
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+/**
+ * Creates the plugin's custom tables on activation and detects schema drift
+ * so Plugin can re-run activation after an upgrade.
+ */
 final class Activator {
+    /**
+     * Checks whether every plugin table and its expected columns already exist.
+     *
+     * @return bool True if the schema matches what this version expects.
+     */
     public static function schema_is_current(): bool {
         global $wpdb;
 
@@ -44,6 +59,9 @@ final class Activator {
 
         return true;
     }
+    /**
+     * Creates/updates the plugin's custom tables (via dbDelta) and seeds default options.
+     */
     public static function activate(): void {
         global $wpdb;
         $charset = $wpdb->get_charset_collate();

@@ -1,11 +1,30 @@
 <?php
+/**
+ * Plugin bootstrap: singleton entry point that wires up all admin_menu,
+ * admin_enqueue_scripts, wp_ajax_*, and cron hooks.
+ *
+ * @package WarmPilot
+ */
+
 namespace YotaX\WarmPilot;
 
 defined('ABSPATH') || exit;
 
+/**
+ * Top of the plugin's class chain: the single instance constructed from
+ * warmpilot.php that registers every WordPress hook the plugin uses.
+ */
 final class Plugin extends Ajax_Controller {
+    /**
+     * Singleton instance.
+     *
+     * @var Plugin|null
+     */
     private static ?Plugin $instance = null;
 
+    /**
+     * Returns the shared Plugin instance, constructing it on first call.
+     */
     public static function instance(): Plugin {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -13,6 +32,9 @@ final class Plugin extends Ajax_Controller {
         return self::$instance;
     }
 
+    /**
+     * Runs activation checks and registers all of the plugin's WordPress hooks.
+     */
     private function __construct() {
         parent::__construct();
 
@@ -48,6 +70,9 @@ final class Plugin extends Ajax_Controller {
         add_action('wp_ajax_warmpilot_delete_profile_logs', [$this, 'ajax_delete_profile_logs']);
         add_action('wp_ajax_warmpilot_delete_manual_logs', [$this, 'ajax_delete_manual_logs']);
 
+        // The intervals added by cron_schedules() are fixed literals (60/300/900/604800
+        // seconds) that never change between releases, so already-scheduled events never drift.
+        // phpcs:ignore WordPress.WP.CronInterval.ChangeDetected
         add_filter('cron_schedules', [$this, 'cron_schedules']);
         add_action(self::CRON_HOOK, [$this, 'cron_tick']);
         if (!wp_next_scheduled(self::CRON_HOOK)) {

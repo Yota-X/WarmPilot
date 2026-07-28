@@ -1,4 +1,10 @@
 <?php
+/**
+ * "Manual warming" tab: warm-up settings form plus the live report table.
+ *
+ * @package WarmPilot
+ */
+
 defined('ABSPATH') || exit;
 ?>
             <div id="warmpilot-manual-tab" class="warmpilot-tab-panel is-active">
@@ -89,30 +95,30 @@ defined('ABSPATH') || exit;
                 <section class="warmpilot-card warmpilot-report-card">
                     <div class="warmpilot-report-head">
                         <h2><?php esc_html_e('Live report', 'warmpilot'); ?></h2>
-                        <span id="warmpilot-state" class="warmpilot-badge">Idle</span>
+                        <span id="warmpilot-state" class="warmpilot-badge"><?php esc_html_e('Idle', 'warmpilot'); ?></span>
                     </div>
                     <div class="warmpilot-progress"><span></span></div>
-                    <div id="warmpilot-progress-meta" class="warmpilot-progress-meta">Known queue: 0 processed / 0 discovered · 0 remaining. More URLs may still be discovered while crawling.</div>
+                    <div id="warmpilot-progress-meta" class="warmpilot-progress-meta"><?php esc_html_e('Known queue: 0 processed / 0 discovered · 0 remaining. More URLs may still be discovered while crawling.', 'warmpilot'); ?></div>
                     <div class="warmpilot-stats">
                         <?php
                         $warmpilot_stats = [
-                            'total' => 'Total Visits',
-                            'successful' => 'Successful',
-                            'failed' => 'Failed',
-                            'skipped' => 'Skipped',
-                            'avg' => 'Avg. page load after warming (sec.)',
-                            'duration' => 'Duration',
-                            'speed' => 'Speed (pages / minute)',
+                            'total' => __('Total Visits', 'warmpilot'),
+                            'successful' => __('Successful', 'warmpilot'),
+                            'failed' => __('Failed', 'warmpilot'),
+                            'skipped' => __('Skipped', 'warmpilot'),
+                            'avg' => __('Avg. page load after warming (sec.)', 'warmpilot'),
+                            'duration' => __('Duration', 'warmpilot'),
+                            'speed' => __('Speed (pages / minute)', 'warmpilot'),
                         ];
                         foreach ($warmpilot_stats as $warmpilot_key => $warmpilot_label) : ?>
                             <div><strong data-stat="<?php echo esc_attr($warmpilot_key); ?>">0</strong><span><?php echo esc_html($warmpilot_label); ?></span></div>
                         <?php endforeach; ?>
                     </div>
                     <div class="warmpilot-report-pagination" id="warmpilot-report-pagination">
-                        <button type="button" class="button warmpilot-report-prev" disabled>&larr; Previous</button>
-                        <span class="warmpilot-report-page">Page 1 of 1</span>
-                        <button type="button" class="button warmpilot-report-next" disabled>Next &rarr;</button>
-                        <label>Rows
+                        <button type="button" class="button warmpilot-report-prev" disabled>&larr; <?php esc_html_e('Previous', 'warmpilot'); ?></button>
+                        <span class="warmpilot-report-page"><?php echo esc_html(sprintf(/* translators: %1$s: current page number, %2$s: total number of pages. */ __('Page %1$s of %2$s', 'warmpilot'), '1', '1')); ?></span>
+                        <button type="button" class="button warmpilot-report-next" disabled><?php esc_html_e('Next', 'warmpilot'); ?> &rarr;</button>
+                        <label><?php esc_html_e('Rows', 'warmpilot'); ?>
                             <select class="warmpilot-report-per-page">
                                 <option value="50">50</option>
                                 <option value="100" selected>100</option>
@@ -124,8 +130,14 @@ defined('ABSPATH') || exit;
                     <div class="warmpilot-table-wrap">
                         <table class="widefat striped" id="warmpilot-results">
                             <thead><tr>
-                                <th>Time</th><th>Depth</th><th>Type</th><th>URL</th>
-                                <th>Afterwards (sec.)</th><th>Code / Error</th><th>Content-Type</th><th>Cache headers</th>
+                                <th><?php esc_html_e('Time', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Depth', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Type', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('URL', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Afterwards (sec.)', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Code / Error', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Content-Type', 'warmpilot'); ?></th>
+                                <th><?php esc_html_e('Cache headers', 'warmpilot'); ?></th>
                             </tr></thead>
                             <tbody></tbody>
                         </table>

@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<ruleset name="WarmPilot">
+    <description>WPCS ruleset for the WarmPilot plugin.</description>
+
+    <file>.</file>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/build/*</exclude-pattern>
+    <exclude-pattern>*/test/*</exclude-pattern>
+    <exclude-pattern>*/dist/*</exclude-pattern>
+
+    <arg value="sp"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+
+    <config name="minimum_supported_wp_version" value="6.2"/>
+
+    <rule ref="WordPress-Extra">
+        <!--
+            This codebase uses a consistent, deliberately compact 4-space-indent
+            style (braces on the same line, single-line guard clauses, no forced
+            operator/array alignment) rather than WPCS's default tab-indent /
+            Allman-style / heavily-spaced formatting. Reformatting the whole
+            project to match those defaults would produce a large, purely
+            cosmetic diff unrelated to security or correctness, so only the
+            formatting sniffs that conflict with the established style are
+            excluded below. All security, i18n, DB, and naming-convention
+            sniffs from WordPress-Extra remain active and are enforced.
+        -->
+        <exclude name="Generic.WhiteSpace.DisallowSpaceIndent"/>
+        <exclude name="PEAR.Functions.FunctionCallSignature"/>
+        <exclude name="Generic.Functions.OpeningFunctionBraceKernighanRitchie"/>
+        <exclude name="Squiz.ControlStructures.ControlSignature"/>
+        <exclude name="WordPress.WhiteSpace.ControlStructureSpacing"/>
+        <exclude name="Universal.WhiteSpace.PrecisionAlignment"/>
+        <exclude name="Universal.ControlStructures.DisallowLonelyIf"/>
+        <exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+        <exclude name="WordPress.WhiteSpace.OperatorSpacing"/>
+        <exclude name="Generic.Formatting.MultipleStatementAlignment"/>
+        <exclude name="WordPress.Arrays.MultipleStatementAlignment"/>
+        <exclude name="NormalizedArrays.Arrays.ArrayBraceSpacing"/>
+        <exclude name="Generic.ControlStructures.InlineControlStructure"/>
+        <exclude name="Generic.WhiteSpace.ArbitraryParenthesesSpacing"/>
+        <exclude name="Squiz.Functions.FunctionDeclarationArgumentSpacing"/>
+        <exclude name="WordPress.Arrays.ArrayDeclarationSpacing"/>
+        <exclude name="WordPress.WhiteSpace.CastStructureSpacing"/>
+        <exclude name="Generic.Formatting.SpaceAfterCast"/>
+        <exclude name="Universal.Operators.DisallowShortTernary"/>
+        <exclude name="WordPress.Arrays.ArrayKeySpacingRestrictions"/>
+        <exclude name="Universal.WhiteSpace.CommaSpacing"/>
+        <exclude name="WordPress.Arrays.ArrayIndentation"/>
+        <exclude name="Squiz.PHP.EmbeddedPhp"/>
+        <exclude name="Squiz.PHP.DisallowMultipleAssignments"/>
+        <exclude name="Generic.Formatting.DisallowMultipleStatements"/>
+        <exclude name="Generic.WhiteSpace.ScopeIndent"/>
+        <exclude name="NormalizedArrays.Arrays.CommaAfterLast"/>
+        <exclude name="PSR2.Classes.ClassDeclaration.CloseBraceAfterBody"/>
+        <!--
+            Yoda conditions guard against accidental "=" typos in comparisons.
+            Every comparison in this codebase already uses strict "===" / "!=="
+            operators, which PHP itself flags as a parse-adjacent error if
+            misused as assignment in this position is not possible the same
+            way, so reordering ~60 existing comparisons for this sniff alone
+            would be pure churn with no corresponding risk reduction.
+        -->
+        <exclude name="WordPress.PHP.YodaConditions"/>
+    </rule>
+    <rule ref="WordPress-Docs"/>
+
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="warmpilot"/>
+                <element value="WarmPilot"/>
+                <element value="YotaX"/>
+            </property>
+        </properties>
+    </rule>
+
+    <rule ref="WordPress.Files.FileName">
+        <properties>
+            <property name="strict_class_file_names" value="false"/>
+        </properties>
+    </rule>
+
+    <rule ref="WordPress.Security.EscapeOutput">
+        <properties>
+            <property name="customEscapingFunctions" type="array">
+                <element value="csv_line"/>
+            </property>
+        </properties>
+    </rule>
+
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="warmpilot"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 define('ABSPATH', __DIR__ . '/wordpress/');
 define('ARRAY_A', 'ARRAY_A');
 define('DAY_IN_SECONDS', 86400);
+define('WARMPILOT_VERSION', '1.0.1');
 
 final class WP_Error {
     public function __construct(public string $code = '', public string $message = '') {}

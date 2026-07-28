@@ -1,4 +1,10 @@
 <?php
+/**
+ * Queueing, deduplication, and totals for job items (URLs to warm).
+ *
+ * @package WarmPilot
+ */
+
 namespace YotaX\WarmPilot;
 
 defined('ABSPATH') || exit;
@@ -8,7 +14,25 @@ defined('ABSPATH') || exit;
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 // phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+/**
+ * Applies scope/pattern/limit rules to a candidate URL and, if it passes,
+ * queues it as a job item; also tracks per-job totals.
+ */
 class Job_Repository extends Crawler {
+    /**
+     * Validates a candidate URL against depth, scope, exclude/include patterns and the URL
+     * limit, then queues it (or records why it was skipped/rejected).
+     *
+     * @param int                  $job_id         Job the URL belongs to.
+     * @param string               $url            Candidate URL (absolute or normalized upstream).
+     * @param int                  $depth          Crawl depth of this URL relative to its seed.
+     * @param string               $type           Item type: page, sitemap, script, style, font, or image.
+     * @param int|null             $parent_id      ID of the item this URL was discovered from, if any.
+     * @param array<string, mixed> $settings       Job settings (max_depth, same_host_only, include/exclude patterns, max_urls, ...).
+     * @param string[]             $allowed_hosts  Hosts considered in-scope for this job.
+     * @param bool                 $bypass_include Skip the include-pattern check (used for seeds and non-page assets).
+     * @return string One of: queued, duplicate, invalid, external, limit, skipped.
+     */
     protected function queue_url(
         int $job_id,
         string $url,
@@ -85,6 +109,16 @@ class Job_Repository extends Crawler {
 
         return $inserted ? 'queued' : 'duplicate';
     }
+    /**
+     * Records a job item as skipped, with the reason it was not queued.
+     *
+     * @param int      $job_id    Job the URL belongs to.
+     * @param string   $url       The skipped URL.
+     * @param int      $depth     Crawl depth of this URL.
+     * @param string   $type      Item type.
+     * @param int|null $parent_id ID of the item this URL was discovered from, if any.
+     * @param string   $reason    Human-readable reason shown in the job report.
+     */
     protected function record_skip(int $job_id, string $url, int $depth, string $type, ?int $parent_id, string $reason): string {
         global $wpdb;
         $wpdb->query($wpdb->prepare(
@@ -103,10 +137,20 @@ class Job_Repository extends Crawler {
         ));
         return 'skipped';
     }
+    /**
+     * Fetches a job row by ID.
+     *
+     * @param int $job_id Job ID.
+     */
     protected function get_job(int $job_id): ?object {
         global $wpdb;
         return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->jobs_table} WHERE id=%d", $job_id)) ?: null;
     }
+    /**
+     * Recomputes and stores a job's aggregate totals (total/successful/failed/skipped/verify time) from its items.
+     *
+     * @param int $job_id Job ID.
+     */
     protected function refresh_job_totals(int $job_id): void {
         global $wpdb;
         $row = $wpdb->get_row($wpdb->prepare(
@@ -127,6 +171,11 @@ class Job_Repository extends Crawler {
             'total_verify_time' => (float) $row->total_verify_time,
         ], ['id' => $job_id]);
     }
+    /**
+     * Deletes a job and all of its items.
+     *
+     * @param int $job_id Job ID.
+     */
     protected function delete_job_and_items(int $job_id): void {
         global $wpdb;
         $wpdb->delete($this->items_table, ['job_id'=>$job_id]);

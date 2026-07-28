@@ -1,9 +1,23 @@
 <?php
+/**
+ * Default settings and input sanitization for warming jobs.
+ *
+ * @package WarmPilot
+ */
+
 namespace YotaX\WarmPilot;
 
 defined('ABSPATH') || exit;
 
+/**
+ * Provides the default warming/log settings and sanitizes user-submitted settings.
+ */
 class Settings extends Database {
+    /**
+     * Default warming settings used for new installs and as a fallback for missing keys.
+     *
+     * @return array<string, mixed> Default warming settings.
+     */
     public static function default_settings(): array {
         return [
             'workers' => 5,
@@ -26,7 +40,7 @@ class Settings extends Database {
                 '*?add-to-cart=*',
                 '*preview=true*',
             ]),
-            'headers' => "User-Agent: WarmPilot/1.0.0\nAccept: text/html,application/xhtml+xml",
+            'headers' => 'User-Agent: WarmPilot/' . WARMPILOT_VERSION . "\nAccept: text/html,application/xhtml+xml",
             'verify_after_warm' => 1,
             'same_host_only' => 1,
             'visit_scripts' => 0,
@@ -37,6 +51,11 @@ class Settings extends Database {
             'ssl_verify' => 1,
         ];
     }
+    /**
+     * Default log-retention settings used for new installs and as a fallback for missing keys.
+     *
+     * @return array<string, mixed> Default log-retention settings.
+     */
     public static function default_log_settings(): array {
         return [
             'log_retention_count' => 50,
@@ -44,6 +63,12 @@ class Settings extends Database {
             'delete_data_on_uninstall' => 0,
         ];
     }
+    /**
+     * Migrates legacy millisecond-based delay keys and fills in any missing defaults.
+     *
+     * @param array<string, mixed> $settings Raw stored or submitted settings.
+     * @return array<string, mixed> Settings with legacy keys migrated and defaults applied.
+     */
     protected function normalize_settings(array $settings): array {
         if (!array_key_exists('delay_seconds', $settings) && array_key_exists('delay_ms', $settings)) {
             $settings['delay_seconds'] = max(0, (float) $settings['delay_ms'] / 1000);
@@ -54,6 +79,12 @@ class Settings extends Database {
         unset($settings['delay_ms'], $settings['retry_delay_ms']);
         return wp_parse_args($settings, self::default_settings());
     }
+    /**
+     * Sanitizes and clamps raw $_POST-style settings input into safe, bounded values.
+     *
+     * @param array<string, mixed> $input Raw, unsanitized settings input (already unslashed by callers where needed).
+     * @return array<string, mixed> Sanitized settings ready for storage.
+     */
     protected function sanitize_settings(array $input): array {
         $defaults = self::default_settings();
         $bools = ['verify_after_warm', 'same_host_only', 'visit_scripts', 'visit_styles', 'visit_fonts', 'visit_images', 'ssl_verify'];
